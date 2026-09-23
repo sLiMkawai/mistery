@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Узнай свою судьбу</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    min-height: 100%;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    background: radial-gradient(ellipse at top, #2a1552 0%, #14072b 45%, #05010d 100%);
+    color: #e9dcff;
+    overflow-x: hidden;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Звёздное небо */
+  .stars, .stars2, .stars3 {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .stars {
+    background-image:
+      radial-gradient(1px 1px at 20px 30px, #fff, transparent),
+      radial-gradient(1px 1px at 130px 80px, #d5c4ff, transparent),
+      radial-gradient(1px 1px at 250px 40px, #fff, transparent),
+      radial-gradient(2px 2px at 350px 150px, #b39dff, transparent),
+      radial-gradient(1px 1px at 80px 200px, #fff, transparent),
+      radial-gradient(1px 1px at 400px 300px, #d5c4ff, transparent);
+    background-size: 500px 400px;
+    animation: drift 120s linear infinite;
+    opacity: 0.7;
+  }
+  .stars2 {
+    background-image:
+      radial-gradient(1px 1px at 60px 60px, #fff, transparent),
+      radial-gradient(1px 1px at 200px 120px, #ffd9f0, transparent),
+      radial-gradient(2px 2px at 300px 200px, #fff, transparent),
+      radial-gradient(1px 1px at 450px 80px, #b39dff, transparent);
+    background-size: 600px 500px;
+    animation: drift 200s linear infinite reverse;
+    opacity: 0.55;
+  }
+  .stars3 {
+    background-image:
+      radial-gradient(1px 1px at 100px 150px, #fff, transparent),
+      radial-gradient(1px 1px at 320px 60px, #d5c4ff, transparent);
+    background-size: 400px 300px;
+    animation: drift 300s linear infinite;
+    opacity: 0.4;
+  }
+
+  @keyframes drift {
+    from { background-position: 0 0; }
+    to   { background-position: 500px 500px; }
+  }
+
+  /* Мистическое свечение в фоне */
+  .aura {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 130vmin;
+    height: 130vmin;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(140, 80, 255, 0.35) 0%, rgba(90, 30, 180, 0.15) 35%, transparent 70%);
+    filter: blur(30px);
+    pointer-events: none;
+    animation: pulse 8s ease-in-out infinite;
+    z-index: 0;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+    50%      { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 2;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 32px 20px 60px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Заголовок */
+  h1 {
+    font-size: clamp(2rem, 8vw, 3.2rem);
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    margin-top: 8px;
+    background: linear-gradient(180deg, #ffffff 0%, #d9c2ff 45%, #8b5cf6 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 40px rgba(140, 80, 255, 0.6);
+    animation: titleGlow 4s ease-in-out infinite;
+  }
+
+  @keyframes titleGlow {
+    0%, 100% { filter: drop-shadow(0 0 10px rgba(140,80,255,0.5)); }
+    50%      { filter: drop-shadow(0 0 28px rgba(180,120,255,0.9)); }
+  }
+
+  .subtitle {
+    margin-top: 10px;
+    font-size: clamp(0.85rem, 3vw, 1rem);
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: #b9a2e8;
+    opacity: 0.85;
+    font-family: 'Helvetica', Arial, sans-serif;
+    font-weight: 300;
+  }
+
+  /* ───── ОРАКУЛ (третий глаз + шар) ───── */
+  .oracle {
+    position: relative;
+    width: min(280px, 72vw);
+    height: min(280px, 72vw);
+    margin: 28px auto 4px;
+    display: grid;
+    place-items: center;
+  }
+
+  .oracle::before {
+    content: "";
+    position: absolute;
+    inset: 6%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 40%, rgba(190,140,255,0.35), rgba(90,30,180,0.1) 55%, transparent 75%);
+    filter: blur(12px);
+    animation: auraSpin 24s linear infinite;
+  }
+
+  @keyframes auraSpin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Внешние руны */
+  .runes {
+    position: absolute;
+    inset: 0;
+    animation: slowSpin 60s linear infinite;
+  }
+  @keyframes slowSpin { to { transform: rotate(360deg); } }
+
+  .runes span {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    font-size: 20px;
+    color: #a37dff;
+    text-shadow: 0 0 12px rgba(160,100,255,0.9);
+    transform-origin: 0 0;
+  }
+
+  /* Сам шар восьмёрка */
+  .ball {
+    position: relative;
+    width: 78%;
+    height: 78%;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 32% 28%, #6b4bb3 0%, #2a1552 40%, #0d0420 100%);
+    box-shadow:
+      inset -18px -18px 40px rgba(0,0,0,0.75),
+      inset 14px 14px 34px rgba(160,110,255,0.35),
+      0 0 40px rgba(140,80,255,0.55),
+      0 0 90px rgba(140,80,255,0.35);
+    display: grid;
+    place-items: center;
+    animation: float 6s ease-in-out infinite;
+    overflow: hidden;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-10px); }
+  }
+
+  /* Блик на шаре */
+  .ball::after {
+    content: "";
+    position: absolute;
+    top: 10%;
+    left: 18%;
+    width: 38%;
+    height: 26%;
+    background: radial-gradient(ellipse at center, rgba(255,255,255,0.55), transparent 70%);
+    border-radius: 50%;
+    filter: blur(6px);
+    pointer-events: none;
+  }
+
+  /* Третий глаз в центре шара */
+  .eye {
+    position: relative;
+    width: 62%;
+    height: 34%;
+    z-index: 3;
+  }
+
+  .eye-shape {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, #f4eaff, #d9c2ff);
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    -webkit-clip-path: ellipse(50% 50% at 50% 50%);
+    clip-path: ellipse(50% 46% at 50% 50%);
+    box-shadow:
+      inset 0 0 20px rgba(90,30,180,0.6),
+      0 0 30px rgba(180,120,255,0.8);
+    animation: blink 6s infinite;
+    transform-origin: center;
+  }
+
+  @keyframes blink {
+    0%, 92%, 100% { transform: scaleY(1); }
+    95%           { transform: scaleY(0.05); }
+  }
+
+  .iris {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 42%;
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(circle, #00e5ff 0%, #6a3cff 45%, #1a0640 100%);
+    box-shadow: 0 0 22px rgba(120,80,255,0.95), inset 0 0 12px #000;
+    animation: irisGlow 3s ease-in-out infinite;
+    display: grid;
+    place-items: center;
+  }
+
+  .iris::before {
+    content: "";
+    width: 40%;
+    height: 40%;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff 0%, #00e5ff 60%, transparent 100%);
+    box-shadow: 0 0 14px #fff;
+  }
+
+  .pupil {
+    position: absolute;
+    width: 22%;
+    height: 22%;
+    background: #05010d;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #000;
+  }
+
+  @keyframes irisGlow {
+    0%, 100% { box-shadow: 0 0 18px rgba(120,80,255,0.7), inset 0 0 12px #000; }
+    50%      { box-shadow: 0 0 34px rgba(160,120,255,1), inset 0 0 12px #000; }
+  }
+
+  /* Мистические лучи */
+  .rays {
+    position: absolute;
+    inset: -20%;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg,
+      transparent 0deg, rgba(160,110,255,0.25) 8deg, transparent 16deg,
+      transparent 45deg, rgba(160,110,255,0.18) 55deg, transparent 65deg,
+      transparent 100deg, rgba(160,110,255,0.22) 110deg, transparent 120deg,
+      transparent 170deg, rgba(160,110,255,0.22) 180deg, transparent 190deg,
+      transparent 240deg, rgba(160,110,255,0.18) 250deg, transparent 260deg,
+      transparent 300deg, rgba(160,110,255,0.2) 310deg, transparent 320deg);
+    animation: slowSpin 40s linear infinite reverse;
+    filter: blur(4px);
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  /* ───── КНОПКА ───── */
+  .btn {
+    margin-top: 26px;
+    padding: 16px 40px;
+    font-family: inherit;
+    font-size: clamp(0.95rem, 3.5vw, 1.1rem);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #f4eaff;
+    background: linear-gradient(135deg, #4a2a8a 0%, #6a3cff 50%, #8b5cf6 100%);
+    border: 1px solid rgba(200,160,255,0.55);
+    border-radius: 60px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+      0 0 24px rgba(140,80,255,0.55),
+      inset 0 1px 0 rgba(255,255,255,0.25);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .btn:hover, .btn:active {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow:
+      0 0 40px rgba(180,120,255,0.9),
+      0 0 80px rgba(140,80,255,0.5),
+      inset 0 1px 0 rgba(255,255,255,0.35);
+  }
+
+  .btn:active { transform: translateY(0) scale(0.98); }
+
+  .btn::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+    transform: translateX(-100%);
+    animation: shine 3.5s ease-in-out infinite;
+  }
+
+  @keyframes shine {
+    0%   { transform: translateX(-100%); }
+    60%  { transform: translateX(100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  /* ───── ПРЕДСКАЗАНИЕ ───── */
+  .prediction {
+    margin-top: 26px;
+    width: 100%;
+    max-width: 520px;
+    padding: 26px 24px;
+    border-radius: 22px;
+    background: linear-gradient(160deg, rgba(60,30,120,0.55), rgba(20,7,43,0.85));
+    border: 1px solid rgba(160,110,255,0.4);
+    box-shadow:
+      0 0 30px rgba(120,70,220,0.35),
+      inset 0 1px 0 rgba(255,255,255,0.08);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    font-size: clamp(1.05rem, 4vw, 1.25rem);
+    line-height: 1.6;
+    font-style: italic;
+    color: #efe3ff;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.9s ease, transform 0.9s ease;
+    pointer-events: none;
+    position: relative;
+  }
+
+  .prediction.show {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .prediction::before, .prediction::after {
+    content: "✦";
+    position: absolute;
+    color: #b48cff;
+    font-style: normal;
+    text-shadow: 0 0 12px rgba(160,100,255,0.9);
+  }
+  .prediction::before { top: 8px; left: 14px; }
+  .prediction::after  { bottom: 8px; right: 14px; }
+
+  .come-again {
+    margin-top: 18px;
+    font-family: 'Helvetica', Arial, sans-serif;
+    font-size: clamp(0.75rem, 3vw, 0.85rem);
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: #b9a2e8;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 1.2s ease 0.4s, transform 1.2s ease 0.4s;
+    text-align: center;
+  }
+
+  .come-again.show {
+    opacity: 0.85;
+    transform: translateY(0);
+  }
+
+  /* ───── ВОЛШЕБНЫЙ ШАР ВОСЬМЁРКА ───── */
+  .divider {
+    width: 80%;
+    max-width: 460px;
+    margin: 46px 0 30px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(160,110,255,0.6), transparent);
+    position: relative;
+  }
+
+  .divider::after {
+    content: "✦";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #b48cff;
+    background: #14072b;
+    padding: 0 12px;
+    text-shadow: 0 0 14px rgba(160,100,255,0.9);
+  }
+
+  .ball-section h2 {
+    font-size: clamp(1.25rem, 5vw, 1.6rem);
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    color: #d9c2ff;
+    text-shadow: 0 0 20px rgba(140,80,255,0.6);
+  }
+
+  .ball-section p.hint {
+    margin-top: 8px;
+    font-size: clamp(0.8rem, 3vw, 0.9rem);
+    font-family: 'Helvetica', Arial, sans-serif;
+    font-weight: 300;
+    color: #a894d8;
+    letter-spacing: 0.05em;
+  }
+
+  /* Шар-восьмёрка */
+  .eightball {
+    position: relative;
+    width: min(200px, 55vw);
+    aspect-ratio: 1;
+    margin: 26px auto 0;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 32% 26%, #3a3a4a 0%, #17172a 45%, #000005 100%);
+    box-shadow:
+      inset -14px -14px 30px rgba(0,0,0,0.9),
+      inset 10px 10px 26px rgba(120,120,180,0.22),
+      0 0 34px rgba(140,80,255,0.6),
+      0 0 70px rgba(140,80,255,0.3);
+    display: grid;
+    place-items: center;
+    animation: float 7s ease-in-out infinite;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .eightball:active { transform: scale(0.96); }
+
+  .eightball.shake {
+    animation: shake 0.7s ease-in-out;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translate(0,0) rotate(0deg); }
+    15% { transform: translate(-6px, 3px) rotate(-6deg); }
+    30% { transform: translate(6px, -3px) rotate(6deg); }
+    45% { transform: translate(-5px, -3px) rotate(-5deg); }
+    60% { transform: translate(5px, 3px) rotate(5deg); }
+    80% { transform: translate(-2px, 1px) rotate(-2deg); }
+  }
+
+  .eightball::after {
+    content: "";
+    position: absolute;
+    top: 10%;
+    left: 16%;
+    width: 34%;
+    height: 22%;
+    background: radial-gradient(ellipse at center, rgba(255,255,255,0.4), transparent 70%);
+    border-radius: 50%;
+    filter: blur(6px);
+    pointer-events: none;
+  }
+
+  /* Треугольник с цифрой 8 */
+  .tri {
+    width: 44%;
+    aspect-ratio: 1;
+    background: radial-gradient(circle at 50% 45%, #7a5cff 0%, #2a1552 70%, #05010d 100%);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    box-shadow:
+      0 0 24px rgba(120,80,255,0.85),
+      inset 0 0 12px rgba(0,0,0,0.8);
+    color: #fff;
+    font-size: clamp(1.4rem, 6vw, 1.9rem);
+    font-family: 'Georgia', serif;
+    text-shadow: 0 0 12px rgba(180,120,255,1);
+    animation: irisGlow 4s ease-in-out infinite;
+  }
+
+  /* Поле вопроса */
+  .q-wrap {
+    margin-top: 22px;
+    width: 100%;
+    max-width: 460px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .q-input {
+    width: 100%;
+    padding: 14px 18px;
+    font-family: inherit;
+    font-size: 1rem;
+    color: #f4eaff;
+    background: rgba(30, 12, 60, 0.6);
+    border: 1px solid rgba(160,110,255,0.45);
+    border-radius: 14px;
+    outline: none;
+    text-align: center;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+
+  .q-input::placeholder { color: #8875b8; font-style: italic; }
+
+  .q-input:focus {
+    border-color: rgba(200,160,255,0.9);
+    box-shadow: 0 0 24px rgba(140,80,255,0.6);
+  }
+
+  .btn.ask {
+    padding: 13px 32px;
+    font-size: clamp(0.85rem, 3.2vw, 0.95rem);
+  }
+
+  /* Ответ шара */
+  .answer {
+    margin-top: 22px;
+    width: 100%;
+    max-width: 460px;
+    padding: 22px 22px;
+    border-radius: 20px;
+    background: linear-gradient(160deg, rgba(60,30,120,0.55), rgba(20,7,43,0.85));
+    border: 1px solid rgba(160,110,255,0.4);
+    box-shadow:
+      0 0 30px rgba(120,70,220,0.35),
+      inset 0 1px 0 rgba(255,255,255,0.08);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    font-size: clamp(1rem, 3.8vw, 1.15rem);
+    line-height: 1.55;
+    font-style: italic;
+    color: #efe3ff;
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+    pointer-events: none;
+    position: relative;
+    text-align: center;
+  }
+
+  .answer.show {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .answer::before {
+    content: "«";
+    position: absolute;
+    top: 4px;
+    left: 14px;
+    color: #b48cff;
+    font-size: 2rem;
+    font-style: normal;
+    line-height: 1;
+    opacity: 0.7;
+  }
+  .answer::after {
+    content: "»";
+    position: absolute;
+    bottom: 4px;
+    right: 14px;
+    color: #b48cff;
+    font-size: 2rem;
+    font-style: normal;
+    line-height: 1;
+    opacity: 0.7;
+  }
+
+  footer {
+    margin-top: 50px;
+    font-family: 'Helvetica', Arial, sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #6a5a94;
+    text-align: center;
+  }
+
+  /* Маленькие экраны */
+  @media (max-width: 380px) {
+    .wrap { padding: 24px 14px 50px; }
+    .btn { padding: 14px 28px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stars"></div>
+<div class="stars2"></div>
+<div class="stars3"></div>
+<div class="aura"></div>
+
+<div class="wrap">
+
+  <h1>Узнай свою судьбу</h1>
+  <div class="subtitle">Тайны за завесой</div>
+
+  <!-- Оракул: шар с третьим глазом -->
+  <div class="oracle" aria-hidden="true">
+    <div class="runes" id="runes"></div>
+    <div class="rays"></div>
+    <div class="ball">
+      <div class="eye">
+        <div class="eye-shape">
+          <div class="iris">
+            <div class="pupil"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn" id="revealBtn">Узнать будущее</button>
+
+  <div class="prediction" id="prediction"></div>
+
+  <div class="come-again" id="comeAgain">Заходи за следующим предсказанием завтра</div>
+
+  <!-- Разделитель -->
+  <div class="divider"></div>
+
+  <!-- Волшебный шар восьмёрка -->
+  <div class="ball-section">
+    <h2>Волшебный шар восьмёрка</h2>
+    <p class="hint">Задай свой вопрос и коснись шара</p>
+
+    <div class="eightball" id="eightball" role="button" aria-label="Волшебный шар восьмёрка">
+      <div class="tri">8</div>
+    </div>
+
+    <div class="q-wrap">
+      <input
+        type="text"
+        class="q-input"
+        id="questionInput"
+        maxlength="120"
+        placeholder="Твой вопрос вселенной..."
+      >
+      <button class="btn ask" id="askBtn">Спросить шар</button>
+    </div>
+
+    <div class="answer" id="answer"></div>
+  </div>
+
+  <footer>✦ Магия внутри тебя ✦</footer>
+</div>
+
+<script>
+/* ───── РУНЫ вокруг оракула ───── */
+(function buildRunes(){
+  const runesBox = document.getElementById('runes');
+  const symbols = ['✦','✧','⋆','✶','❈','✷','✵','☾','☽','✹'];
+  const count = symbols.length;
+  const radius = 50; // в процентах от половины контейнера
+  symbols.forEach((sym, i) => {
+    const angle = (i / count) * Math.PI * 2;
+    const x = 50 + Math.cos(angle) * radius;
+    const y = 50 + Math.sin(angle) * radius;
+    const span = document.createElement('span');
+    span.textContent = sym;
+    span.style.left = x + '%';
+    span.style.top  = y + '%';
+    span.style.transform = `translate(-50%,-50%) rotate(${angle * 180 / Math.PI}deg)`;
+    span.style.transformOrigin = 'center';
+    span.style.animation = `pulse ${3 + (i % 3)}s ease-in-out ${i * 0.2}s infinite`;
+    runesBox.appendChild(span);
+  });
+})();
+
+/* ───── ПРЕДСКАЗАНИЯ НА ЗАВТРА ───── */
+const predictions = [
+  "Завтра тебя ждёт неожиданная встреча, которая изменит ход твоих мыслей.",
+  "Звёзды говорят: завтра удача улыбнётся тебе там, где ты её совсем не ждёшь.",
+  "Завтра ты услышишь слова, которые давно ждал(а) — прислушайся к ним.",
+  "Тени прошлого отпустят тебя завтра. Сделай шаг навстречу новому.",
+  "Завтрашний день принесёт маленькое чудо — не пропусти его в суете.",
+  "Луна шепчет: завтра твоё сердце подскажет верный путь.",
+  "Завтра перед тобой откроется дверь, о которой ты мечтал(а) втайне.",
+  "Кто-то вспомнит о тебе завтра с теплотой — и это вернётся добром.",
+  "Завтра твоя интуиция станет острее — доверься ей в важном решении.",
+  "Древние силы сулят: завтра ты найдёшь ответ, который искал(а) давно.",
+  "Завтра хороший день для начала. Начни то, что откладывал(а).",
+  "Судьба готовит тебе завтра приятный сюрприз от близкого человека.",
+  "Завтра поток энергии будет на твоей стороне — используй его с умом.",
+  "Завтра ты увидишь знак. Он будет простым — не пройди мимо.",
+  "Завтра прошлое наконец отпустит тебя, и станет легче дышать."
+];
+
+const revealBtn   = document.getElementById('revealBtn');
+const prediction  = document.getElementById('prediction');
+const comeAgain   = document.getElementById('comeAgain');
+
+let lastIndex = -1;
+
+function pickPrediction() {
+  let i;
+  do { i = Math.floor(Math.random() * predictions.length); }
+  while (i === lastIndex && predictions.length > 1);
+  lastIndex = i;
+  return predictions[i];
+}
+
+revealBtn.addEventListener('click', () => {
+  // Лёгкое свечение кнопки на время
+  revealBtn.style.pointerEvents = 'none';
+  revealBtn.style.opacity = '0.7';
+
+  prediction.classList.remove('show');
+  comeAgain.classList.remove('show');
+
+  // Небольшая магическая пауза
+  setTimeout(() => {
+    prediction.textContent = pickPrediction();
+    prediction.classList.add('show');
+
+    setTimeout(() => {
+      comeAgain.classList.add('show');
+      revealBtn.style.pointerEvents = 'auto';
+      revealBtn.style.opacity = '1';
+    }, 900);
+  }, 650);
+
+  // Плавный скролл к предсказанию
+  setTimeout(() => {
+    prediction.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 800);
+});
+
+/* ───── ВОЛШЕБНЫЙ ШАР ВОСЬМЁРКА ───── */
+const answers = [
+  "Бесспорно.",
+  "Определённо да.",
+  "Без сомнений.",
+  "Да — звёзды благоволят.",
+  "Можешь на это рассчитывать.",
+  "Как я вижу — да.",
+  "Скорее всего.",
+  "Хорошие знаки.",
+  "Туманно... попробуй снова.",
+  "Спроси позже.",
+  "Сейчас нельзя предсказать.",
+  "Сконцентрируйся и спроси снова.",
+  "Не рассчитывай на это.",
+  "Мой ответ — нет.",
+  "Источники говорят: нет.",
+  "Очень сомнительно.",
+  "Тени шепчут — не сейчас."
+];
+
+const eightball      = document.getElementById('eightball');
+const questionInput  = document.getElementById('questionInput');
+const askBtn         = document.getElementById('askBtn');
+const answerBox      = document.getElementById('answer');
+
+let answering = false;
+
+function askBall() {
+  if (answering) return;
+  const q = questionInput.value.trim();
+
+  if (!q) {
+    questionInput.focus();
+    questionInput.placeholder = "Сначала задай вопрос...";
+    questionInput.style.borderColor = 'rgba(255,120,180,0.8)';
+    setTimeout(() => {
+      questionInput.style.borderColor = '';
+      questionInput.placeholder = "Твой вопрос вселенной...";
+    }, 1600);
+    return;
+  }
+
+  answering = true;
+  answerBox.classList.remove('show');
+  eightball.classList.add('shake');
+
+  setTimeout(() => {
+    const a = answers[Math.floor(Math.random() * answers.length)];
+    answerBox.textContent = a;
+    answerBox.classList.add('show');
+  }, 700);
+
+  setTimeout(() => {
+    eightball.classList.remove('shake');
+    answering = false;
+  }, 900);
+}
+
+eightball.addEventListener('click', askBall);
+askBtn.addEventListener('click', askBall);
+
+questionInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    askBall();
+  }
+});
+</script>
+</body>
+</html>
