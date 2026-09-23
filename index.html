@@ -14,7 +14,6 @@
     color: #e9dcff;
     overflow-x: hidden;
     position: relative;
-    overflow: hidden;
     -webkit-tap-highlight-color: transparent;
   }
 
@@ -84,13 +83,15 @@
   .wrap {
     position: relative;
     z-index: 2;
-    max-width: 640px;
+    max-width: 720px;
     margin: 0 auto;
-    padding: 32px 20px 60px;
+    padding: 40px 24px 70px;
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
+    min-height: 100vh;
+    justify-content: flex-start;
   }
 
   /* Заголовок */
@@ -163,6 +164,32 @@
     color: #a37dff;
     text-shadow: 0 0 12px rgba(160,100,255,0.9);
     transform-origin: 0 0;
+  }
+
+  /* ───── ОРБИТАЛЬНЫЕ КАРТИНКИ ВОКРУГ ГЛАЗА ───── */
+  .orbit-arm {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    animation: orbitSpin 25s linear infinite;
+  }
+
+  @keyframes orbitSpin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  .orbit-img {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    height: auto;
+    transform: translate(-50%, -50%);
+    filter: drop-shadow(0 0 12px rgba(180,140,255,0.9))
+            drop-shadow(0 0 24px rgba(140,80,255,0.5));
+    pointer-events: none;
+    will-change: transform;
   }
 
   /* Сам шар восьмёрка */
@@ -284,6 +311,19 @@
     filter: blur(4px);
     pointer-events: none;
     z-index: -1;
+  }
+
+  /* ───── ЛЕТАЮЩИЕ КОМЕТЫ (SVG/PNG) ───── */
+  .comet {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 1;
+    will-change: transform, opacity;
+    filter: drop-shadow(0 0 8px rgba(180,140,255,0.9))
+            drop-shadow(0 0 20px rgba(140,80,255,0.5));
+    transform-origin: center;
   }
 
   /* ───── КНОПКА ───── */
@@ -609,6 +649,47 @@
     .wrap { padding: 24px 14px 50px; }
     .btn { padding: 14px 28px; }
   }
+
+  /* 💻 Компьютер / планшет */
+  @media (min-width: 900px) {
+    .wrap { max-width: 1000px; padding: 60px 40px 90px; }
+    h1 { font-size: clamp(3rem, 4.5vw, 4.4rem); letter-spacing: 0.08em; }
+    .subtitle { font-size: 1.05rem; letter-spacing: 0.45em; margin-top: 14px; }
+
+    .oracle { width: min(420px, 40vw); height: min(420px, 40vw); margin: 40px auto 10px; }
+    .runes span { font-size: 26px; }
+
+    .btn { padding: 20px 60px; font-size: 1.15rem; letter-spacing: 0.16em; margin-top: 34px; }
+    .btn.ask { padding: 16px 48px; font-size: 1rem; }
+
+    .prediction { max-width: 760px; padding: 40px 44px; font-size: 1.4rem; line-height: 1.65; border-radius: 26px; }
+    .come-again { font-size: 0.95rem; letter-spacing: 0.35em; margin-top: 22px; }
+
+    .divider { max-width: 680px; margin: 60px 0 40px; }
+    .ball-section h2 { font-size: 2rem; }
+    .ball-section p.hint { font-size: 1rem; margin-top: 10px; }
+
+    .eightball { width: min(300px, 30vw); margin-top: 34px; }
+    .tri { font-size: 2.4rem; }
+
+    .q-wrap { max-width: 640px; margin-top: 30px; gap: 16px; }
+    .q-input { padding: 18px 24px; font-size: 1.1rem; border-radius: 16px; }
+
+    .answer { max-width: 640px; padding: 30px 32px; font-size: 1.3rem; border-radius: 24px; margin-top: 28px; }
+    .answer::before, .answer::after { font-size: 2.6rem; }
+
+    footer { margin-top: 70px; font-size: 0.8rem; }
+  }
+
+  /* 🖥️ Очень широкие экраны */
+  @media (min-width: 1400px) {
+    .wrap { max-width: 1180px; }
+    h1 { font-size: 4.8rem; }
+    .oracle { width: 480px; height: 480px; }
+    .prediction { max-width: 860px; font-size: 1.5rem; }
+    .answer { max-width: 720px; font-size: 1.4rem; }
+    .eightball { width: 340px; }
+  }
 </style>
 </head>
 <body>
@@ -636,6 +717,7 @@
         </div>
       </div>
     </div>
+    <!-- Сюда JS добавит орбитальные картинки вокруг глаза -->
   </div>
 
   <button class="btn" id="revealBtn">Узнать будущее</button>
@@ -674,12 +756,87 @@
 </div>
 
 <script>
-/* ───── РУНЫ вокруг оракула ───── */
+/* ============================================================
+   ✨  МАГИЧЕСКИЕ НАСТРОЙКИ — ЗАМЕНИ ПУТИ НА СВОИ КАРТИНКИ
+   ============================================================
+   Указывай пути к SVG или PNG. Примеры:
+     'comet.svg'
+     'images/comet.png'
+     'icons/star.svg'
+     'https://example.com/comet.png'
+   ============================================================ */
+const MAGIC = {
+
+  /* ── 🖼️ КАРТИНКИ-ОРБИТЫ ВОКРУГ ГЛАЗА ПРОРОКА ──
+     Одна или несколько картинок. Они будут вращаться вокруг
+     третьего глаза по кругу. Оставь пустой, чтобы отключить. */
+  orbitImages: [
+    'avanta.svg',
+    // 'rune.png',
+    // 'crystal.svg',
+  ],
+
+  // Размер орбитальной картинки в % от диаметра оракула
+  orbitImageSize: 16,
+
+  // Скорость вращения орбиты (секунды на полный оборот)
+  orbitSpeed: 22,
+
+  /* ── ☄️  ЛЕТАЮЩИЕ КОМЕТЫ ──
+     Если пусто — будет использована встроенная SVG-комета.
+     Можно перечислить несколько картинок — они чередуются. */
+  cometImages: [
+  'avanta.svg',
+  'shtab.png'
+
+  ],
+
+  // Интервал появления комет (мс). Случайное значение между min и max.
+  cometMinInterval: 2000,
+  cometMaxInterval: 5500,
+
+  // Размер кометы в пикселях (случайно между min и max)
+  cometMinSize: 60,
+  cometMaxSize: 160,
+
+  // Скорость полёта кометы — длительность в мс (случайно между min и max)
+  cometMinDuration: 4000,
+  cometMaxDuration: 8000,
+};
+
+/* ============================================================
+   Встроенная SVG-комета по умолчанию (используется, если
+   MAGIC.cometImages пуст)
+   ============================================================ */
+const DEFAULT_COMET_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 50">' +
+    '<defs>' +
+      '<radialGradient id="h">' +
+        '<stop offset="0" stop-color="#ffffff" stop-opacity="1"/>' +
+        '<stop offset="0.4" stop-color="#d9c2ff" stop-opacity="0.8"/>' +
+        '<stop offset="1" stop-color="#b48cff" stop-opacity="0"/>' +
+      '</radialGradient>' +
+      '<linearGradient id="t" x1="0" y1="0.5" x2="1" y2="0.5">' +
+        '<stop offset="0" stop-color="#b48cff" stop-opacity="0"/>' +
+        '<stop offset="0.7" stop-color="#d9c2ff" stop-opacity="0.6"/>' +
+        '<stop offset="1" stop-color="#ffffff" stop-opacity="0.95"/>' +
+      '</linearGradient>' +
+    '</defs>' +
+    '<path d="M0,25 Q70,18 120,25 Q70,32 0,25 Z" fill="url(#t)"/>' +
+    '<circle cx="120" cy="25" r="22" fill="url(#h)"/>' +
+    '<circle cx="120" cy="25" r="7" fill="#ffffff"/>' +
+    '<circle cx="120" cy="25" r="3" fill="#ffffff" opacity="0.9"/>' +
+  '</svg>'
+);
+
+/* ============================================================
+   РУНЫ вокруг оракула
+   ============================================================ */
 (function buildRunes(){
   const runesBox = document.getElementById('runes');
   const symbols = ['✦','✧','⋆','✶','❈','✷','✵','☾','☽','✹'];
   const count = symbols.length;
-  const radius = 50; // в процентах от половины контейнера
+  const radius = 50;
   symbols.forEach((sym, i) => {
     const angle = (i / count) * Math.PI * 2;
     const x = 50 + Math.cos(angle) * radius;
@@ -695,7 +852,120 @@
   });
 })();
 
-/* ───── ПРЕДСКАЗАНИЯ НА ЗАВТРА ───── */
+/* ============================================================
+   🖼️  ОРБИТАЛЬНЫЕ КАРТИНКИ ВОКРУГ ГЛАЗА ПРОРОКА
+   ============================================================ */
+(function buildOrbit(){
+  const oracle = document.querySelector('.oracle');
+  if (!oracle || !MAGIC.orbitImages.length) return;
+
+  const n = MAGIC.orbitImages.length;
+  MAGIC.orbitImages.forEach((src, i) => {
+    const arm = document.createElement('div');
+    arm.className = 'orbit-arm';
+    // Смещаем каждый элемент по орбите, чтобы они распределились по кругу
+    arm.style.animationDelay = `-${(i / n) * MAGIC.orbitSpeed}s`;
+    arm.style.animationDuration = MAGIC.orbitSpeed + 's';
+
+    const img = document.createElement('img');
+    img.className = 'orbit-img';
+    img.src = src;
+    img.alt = '';
+    img.style.width = MAGIC.orbitImageSize + '%';
+
+    arm.appendChild(img);
+    oracle.appendChild(arm);
+  });
+})();
+
+/* ============================================================
+   ☄️  ЛЕТАЮЩИЕ КОМЕТЫ (SVG/PNG)
+   ============================================================ */
+(function cometSystem(){
+  const images = MAGIC.cometImages.length ? MAGIC.cometImages : [DEFAULT_COMET_SVG];
+  let imageIdx = 0;
+
+  function rand(min, max){ return min + Math.random() * (max - min); }
+
+  function spawnComet(){
+    const src = images[imageIdx % images.length];
+    imageIdx++;
+
+    const img = document.createElement('img');
+    img.className = 'comet';
+    img.src = src;
+    img.alt = '';
+    img.style.width = rand(MAGIC.cometMinSize, MAGIC.cometMaxSize).toFixed(0) + 'px';
+
+    // Стартовая точка: за правым краем, в верхней половине экрана
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const startX = w + 150;
+    const startY = -80 + Math.random() * (h * 0.55);
+
+    // Угол полёта — 15-30° вниз-влево
+    const angleDeg = 18 + Math.random() * 14;
+    const angleRad = angleDeg * Math.PI / 180;
+    const distance = w * 1.3 + 400;
+
+    const endX = startX - Math.cos(angleRad) * distance;
+    const endY = startY + Math.sin(angleRad) * distance;
+
+    // Поворот картинки под направление полёта (комета "летит носом вперёд")
+    // Итоговый угол отрицательный, т.к. летим влево
+    const rotateDeg = 180 + angleDeg;
+
+    document.body.appendChild(img);
+
+    const duration = rand(MAGIC.cometMinDuration, MAGIC.cometMaxDuration);
+    const startTime = performance.now();
+
+    function step(now){
+      const t = Math.min((now - startTime) / duration, 1);
+      const x = startX + (endX - startX) * t;
+      const y = startY + (endY - startY) * t;
+
+      img.style.transform = `translate(${x}px, ${y}px) rotate(${rotateDeg}deg)`;
+
+      // Плавное появление и исчезновение
+      let opacity = 1;
+      if (t < 0.1) opacity = t * 10;
+      else if (t > 0.85) opacity = Math.max(0, (1 - t) / 0.15);
+      img.style.opacity = opacity;
+
+      if (t < 1) {
+        requestAnimationFrame(step);
+      } else {
+        img.remove();
+      }
+    }
+
+    requestAnimationFrame(step);
+  }
+
+  function scheduleNext(){
+    const delay = rand(MAGIC.cometMinInterval, MAGIC.cometMaxInterval);
+    setTimeout(() => {
+      spawnComet();
+      scheduleNext();
+    }, delay);
+  }
+
+  // Первая комета — через мгновение после загрузки
+  setTimeout(spawnComet, 800);
+  scheduleNext();
+
+  // Дополнительно: при клике на любую пустую область — ещё одна комета
+  // (можно убрать этот блок, если не нужно)
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('button, input, .eightball, .btn')) return;
+    spawnComet();
+  });
+})();
+
+/* ============================================================
+   ПРЕДСКАЗАНИЯ НА ЗАВТРА
+   ============================================================ */
 const predictions = [
   "Завтра тебя ждёт неожиданная встреча, которая изменит ход твоих мыслей.",
   "Звёзды говорят: завтра удача улыбнётся тебе там, где ты её совсем не ждёшь.",
@@ -729,14 +999,12 @@ function pickPrediction() {
 }
 
 revealBtn.addEventListener('click', () => {
-  // Лёгкое свечение кнопки на время
   revealBtn.style.pointerEvents = 'none';
   revealBtn.style.opacity = '0.7';
 
   prediction.classList.remove('show');
   comeAgain.classList.remove('show');
 
-  // Небольшая магическая пауза
   setTimeout(() => {
     prediction.textContent = pickPrediction();
     prediction.classList.add('show');
@@ -748,13 +1016,14 @@ revealBtn.addEventListener('click', () => {
     }, 900);
   }, 650);
 
-  // Плавный скролл к предсказанию
   setTimeout(() => {
     prediction.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, 800);
 });
 
-/* ───── ВОЛШЕБНЫЙ ШАР ВОСЬМЁРКА ───── */
+/* ============================================================
+   ВОЛШЕБНЫЙ ШАР ВОСЬМЁРКА
+   ============================================================ */
 const answers = [
   "Бесспорно.",
   "Определённо да.",
